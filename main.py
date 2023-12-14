@@ -96,9 +96,7 @@ def crawler(username,password):
     element = WebDriverWait(driver, 10).until(
     EC.presence_of_element_located((By.CSS_SELECTOR, '#calendar > div.fc-toolbar > div.fc-center > h2'))
     )
-    print(element.text)
     YearMonth = element.text
-    
     for element in tqdm(elements, desc="Processing elements", unit="element"):
         element.click() 
         time.sleep(1)
@@ -117,8 +115,10 @@ def crawler(username,password):
 
             scheduleTime_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#__schedule_time')))        
             if element.text.strip():
-                schedule_time = scheduleTime_element.text 
+                schedule_date= element.text .split()[0]
+                schedule_time = element.text .split()[1]
                 
+
             subject_element = wait.until(EC.presence_of_element_located((By.XPATH, '//div[@id="__subject"]')))
             if subject_element.text.strip():
                 subject = subject_element.text 
@@ -134,12 +134,12 @@ def crawler(username,password):
             if(cal_name!="근태"):
                 data.append({
                 'cal_name': cal_name,
+                'schedule_date': schedule_date,
                 'schedule_time': schedule_time,
                 'subject': subject,
                 'schedule_regidate': schedule_regidate,
                 'contents': contents
                 })
-        #__schedule_time
 
         try :        
             element = driver.find_element(By.CSS_SELECTOR, '#layer_schedule_confirm > a.icon.btn_closelayer')
@@ -150,11 +150,17 @@ def crawler(username,password):
     
 
     df = pd.DataFrame(data)
-    YearMonth = element.text
-    YearMonth = element.text.replace(".","-")
-    
-    print(YearMonth)
+    YearMonth = YearMonth.replace(".","-")
     df = df[df['schedule_time'].str.contains(YearMonth)]
+    
+    print(df)
+    df['schedule_time'] = pd.to_datetime(df['schedule_time'], errors='coerce')
+ 
+    # schedule_time에서 날짜 부분 추출
+    df['date_part'] = df['schedule_time'].dt.date
+    # 문자열을 datetime 객체로 변환
+    # df_sorted = df.sort_values(by='schedule_time', ascending=True)
+
     print(df)
 
 if __name__ == "__main__":
