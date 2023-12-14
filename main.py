@@ -3,23 +3,13 @@ from itertools import islice
 import tracemalloc
 import pandas as pd
 from sqlalchemy import create_engine, inspect,text
-import pymysql
-import re
-from bs4 import BeautifulSoup
 import requests
 from tqdm import tqdm
-from datetime import datetime, timedelta
-import chardet
 from concurrent.futures import as_completed
-import concurrent.futures
-
-from sqlalchemy.orm import sessionmaker
-import aiohttp
-import asyncio
 import requests
+import json
 
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -28,25 +18,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 import time
 import difflib
+from dotenv import load_dotenv
+import os 
 
-
-diff_price_data=[]
-current_price_data=[]
-previous_close_data=[]
-diff_percent_data=[]
-
-
-
-
-session = requests.Session()
-
-
-
+load_dotenv()
 chrome_options = Options()
 chrome_options.add_argument('--headless')  # 브라우저 창을 숨기는 옵션
 
-driver = webdriver.Chrome(options=chrome_options)
-# driver = webdriver.Chrome()
+# driver = webdriver.Chrome(options=chrome_options)
+driver = webdriver.Chrome()
 
 
 employee=['김지연','이준태','조성희','백민철','고수비','최진호']
@@ -166,11 +146,9 @@ def crawler(username,password):
 
         try :        
             element = driver.find_element(By.CSS_SELECTOR, '#layer_schedule_confirm > a.icon.btn_closelayer')
-        # 찾은 엘리먼트가 있다면 여기에 수행할 작업 추가
             element.click() 
         except:
             element = driver.find_element(By.CSS_SELECTOR, '#layer_schedule > div.layer_button > button:nth-child(2)')
-        # 찾은 엘리먼트가 없을 경우 여기에 수행할 작업 추가
             element.click() 
     
 
@@ -178,9 +156,14 @@ def crawler(username,password):
     YearMonth = element.text
     YearMonth = element.text.replace(".","-")
     
+    print(YearMonth)
     df = df[df['schedule_time'].str.contains(YearMonth)]
     print(df)
-    # time.sleep(1000)
 
 if __name__ == "__main__":
-
+    id = os.environ.get('id')
+    password = os.environ.get('password')
+    employee = os.environ.get('employee')
+    employee_list = eval(employee)
+    
+    crawler(id,password)
