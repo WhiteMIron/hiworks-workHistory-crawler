@@ -29,9 +29,6 @@ chrome_options.add_argument('--headless')  # 브라우저 창을 숨기는 옵�
 driver = webdriver.Chrome()
 
 
-employee=['김지연','이준태','조성희','백민철','고수비','최진호']
-
-
 def find_most_similar(original, candidates):
     similarity_scores = []
 
