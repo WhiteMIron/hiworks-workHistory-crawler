@@ -14,6 +14,8 @@ from tqdm import tqdm
 import difflib
 from dotenv import load_dotenv
 import os
+import json
+import ast
 
 load_dotenv()
 
@@ -22,6 +24,24 @@ chrome_options.add_argument('--headless')  # 브라우저 창을 숨기는 옵�
 
 # driver = webdriver.Chrome(options=chrome_options)
 driver = webdriver.Chrome()
+
+
+def sorted_employee_with_position(input_names):
+    
+    employee = os.environ.get("employee")
+    name_priority = os.environ.get('name_priority')
+    
+    name_priority_dic= json.loads(name_priority)
+    employee_dic = json.loads(employee)
+   
+
+    sorted_employee = sorted(input_names, key=lambda x: name_priority_dic[x])
+    sorted_employee_with_position = [employee_dic[name] for name in sorted_employee]
+
+    return sorted_employee_with_position
+    
+
+
 
 
 def find_most_similar(original, candidates):
@@ -124,6 +144,13 @@ def extract_customer(input_str,candidate):
     result = find_most_similar(input_str,candidate)
     return result
 
+def get_employees(employee,content):
+    result_employees=[]   
+    for emp in employee:
+        if emp in content:
+            result_employees.append(emp)
+    return result_employees
+    
 def hiworks_crawler(username, password):
     login_url = "https://login.office.hiworks.com/ostech.co.kr"
 
@@ -215,7 +242,7 @@ def hiworks_crawler(username, password):
             contents_element = wait.until(  EC.presence_of_element_located((By.XPATH, '//div[@id="__contents"]')))
             if contents_element.text.strip():
                 contents = contents_element.text 
-
+                employees = get_employees(contents)
             if(cal_name=="근태" or "검진"  in subject or "연차"  in subject  or "휴가" in subject ):
                 pass
             else :
@@ -240,6 +267,12 @@ def hiworks_crawler(username, password):
     
 
     df = pd.DataFrame(data)
+
+    sorted_names=sorted_employee()
+    # # SE 칼럼 추가
+    for i, name in enumerate(sorted_names, start=1):
+        df[f'SE{i}'] = [name]
+
     YearMonth = YearMonth.replace(".","-")
     df = df[df['schedule_date'].str.contains(YearMonth)]
     
