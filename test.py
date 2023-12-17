@@ -138,79 +138,12 @@ def convert_to_24hr_format(time_str):
         time_24hr_str = parts[1]
 
     elif (parts[0]=='오후') :
-        time_24hr_str = str(int(parts[1].split(":")[0]) + 12) + ":"+parts[1].split(":")[1]
-    
-
-    # return time_24hr_str
+        if(parts[1].split(":")[0]!="12"):
+            time_24hr_str = str(int(parts[1].split(":")[0]) + 12) + ":"+parts[1].split(":")[1]
+        else :
+            time_24hr_str = parts[1]
     return  datetime.strptime(time_24hr_str, "%H:%M").time()
 
-
-# def extract_date_and_time_range(input_str):
-#     parts = input_str.split()
-
-#     # 날짜 추출
-#     date_result = parts[0]
-#     result_str = input_str.replace(date_result, '')
-#     print(date_result)
-#     print(result_str)
-#     # 시간 범위 추출
-#     if len(result_str)>2 :
-#         time_range_parts = result_str.split('~')
-#         start_time = time_range_parts[0]  
-#         end_time = time_range_parts[1]    
-
-#         start_time_result =convert_to_24hr_format(start_time)
-#         end_time_result =convert_to_24hr_format(end_time)
-     
-#         print(type(start_time_result))
-
-#         start_date = datetime.strptime(date_result, "%Y-%m-%d")
-
-
-#         if start_time_result > end_time_result:
-#             end_date = start_date + timedelta(days=1)
-#         else:
-#             end_date = start_date
-
-
-
-#         return start_date.date(),end_date.date(), start_time_result, end_time_result
-#     else :
-#         return start_date.date(), end_date.date(),None,None
-
-
-# def extract_date_and_time_range(input_str):
-
-
-#     date_start_str, end_date_str = input_str.split("~")
-
-#     # 날짜와 시간 정보 추출
-#     start_date_info = date_start_str.strip().split(" ")
-
-#     end_date_info = end_date_str.strip().split(" ")
-#     start_date = datetime.strptime(start_date_info[0], "%Y-%m-%d").date()
-
-#     if len(end_date_info) == 3 : 
-#         end_date = datetime.strptime(end_date_info[0], "%Y-%m-%d").date()
-
-#     elif len(end_date_info) ==2 :
-#         start_date_info.pop(0)
-#         start_date_time = ' '.join(start_date_info)
-#         end_date_time = ' '.join(end_date_info)
-
-    
-#         start_time = start_date_time
-#         end_time = end_date_time
-#         start_time_result =convert_to_24hr_format(start_time)
-#         end_time_result =convert_to_24hr_format(end_time)
-       
-#         if start_time_result > end_time_result:
-#             end_date = start_date + timedelta(days=1)
-#         else:
-#             end_date = start_date
-#     print(start_time_result)
-#     return start_date, end_date, start_time_result, end_time_result
-  
 
 
 # # 주어진 문자열
@@ -263,7 +196,7 @@ def extract_date_and_time_range(input_time_str) :
     start_date_time = ' '.join(start_date_info)
     start_time = start_date_time
     start_time_result =convert_to_24hr_format(start_time)
-       
+
     if len(end_date_info) == 3 : 
         end_date = datetime.strptime(end_date_info[0], "%Y-%m-%d").date()
         end_date_info.pop(0)
@@ -285,3 +218,42 @@ def extract_date_and_time_range(input_time_str) :
 
     return start_date, end_date, start_time_result, end_time_result
   
+
+
+
+def is_weekend(date):
+    # date_object = datetime.strptime(date_str, '%Y-%m-%d')
+    
+    if date.weekday() in [5, 6]:  
+        return True
+    else:
+        return False
+    
+
+def classify_day_night(start_time, end_time, day_start_time_str="09:00", night_start_time_str="18:30"):
+    # 문자열을 datetime 객체로 변환
+    day_start_time = datetime.strptime(day_start_time_str, '%H:%M').time()
+    night_start_time = datetime.strptime(night_start_time_str, '%H:%M').time()
+
+    # 문자열을 datetime 객체로 변환
+    if isinstance(start_time, str):
+        start_time = datetime.strptime(start_time, '%H:%M')
+    if isinstance(end_time, str):
+        end_time = datetime.strptime(end_time, '%H:%M')
+
+    if day_start_time <= start_time < night_start_time and end_time <= night_start_time:
+        return '주간'
+    elif day_start_time <= start_time < night_start_time and night_start_time <= end_time:
+        return '주/야간'
+    elif night_start_time <= start_time:
+        return '야간'
+
+
+
+date="2023-11-27 오전 9:00~오후 6:00"
+start_date,end_date, start_time, end_time = extract_date_and_time_range(date)
+
+
+
+while True :
+    print("1")
