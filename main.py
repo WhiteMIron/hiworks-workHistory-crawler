@@ -42,7 +42,7 @@ def read_ini_file(file_path):
     NOT_WORK_CONTENT_str =  config.get('config', 'NOT_WORK_CONTENT')
     REGION_CANDIDATE_str = config.get('config', 'REGION_CANDIDATE')
     REGION_CANDIDATE_WEIGHTS_str =config.get('config', 'REGION_CANDIDATE_WEIGHTS')
-
+    FILE_PATH = config.get('config', 'FILE_PATH')
 
 
     EMPLOYEES_DIC = get_env_dic(EMPLOYEES_str)
@@ -56,12 +56,14 @@ def read_ini_file(file_path):
         'config': {
             'ID': ID,
             'PASSWORD': PASSWORD,
+            'FILE_PATH':FILE_PATH,
             'EMPLOYEES_DIC': EMPLOYEES_DIC,
             'NAME_PRIORITY_DIC': NAME_PRIORITY_DIC,
             'REGION_CANDIDATE_ARR': REGION_CANDIDATE_ARR,
             'REGION_CANDIDATE_WEIGHTS_DIC':REGION_CANDIDATE_WEIGHTS_DIC,
             'CUSTOMER_CANDIDATE':CUSTOMER_CANDIDATE,
             'NOT_WORK_CONTENT':NOT_WORK_CONTENT,
+            
          }
     }
 

@@ -1,8 +1,10 @@
 
 
 import difflib
+import shutil
 from dotenv import load_dotenv
 import numpy as np
+import openpyxl
 import pandas as pd
 import os
 import ast
@@ -255,5 +257,29 @@ start_date,end_date, start_time, end_time = extract_date_and_time_range(date)
 
 
 
-while True :
-    print("1")
+def write_data_to_excel(filePath):
+    
+    directory, filename = os.path.split(filePath)
+
+    # 백업 파일 이름 생성 (현재 날짜와 시간을 이용하여 고유한 이름 생성)
+    backup_filename = f"{filename}_backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.xlsx"
+
+    # 백업 파일 경로 생성
+    backup_filepath = os.path.join(directory, backup_filename)
+
+    print(backup_filepath)
+    # 원본 파일을 백업 파일로 복사
+    shutil.copyfile(filePath, backup_filepath)
+ 
+    
+    
+    # workbook = openpyxl.load_workbook(filePath)
+    # sheet = workbook.active
+   
+    # for row_values in df.values.tolist():
+    #     sheet.append(row_values)
+    # workbook.save(filePath)
+    # print(f"데이터가 성공적으로 추가되어 '{filePath}' 파일이 업데이트되었습니다.")
+    
+
+write_data_to_excel("2023년 서비스 내역_20231205.xlsx")

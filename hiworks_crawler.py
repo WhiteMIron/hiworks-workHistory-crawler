@@ -1,10 +1,8 @@
-
-import ast
-import configparser
-from datetime import datetime,timedelta
+import os
+import shutil
 import time
-
 import pandas as pd
+from datetime import datetime,timedelta
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -13,17 +11,15 @@ from selenium.webdriver.chrome.options import Options
 from tqdm import tqdm
 import difflib
 from dotenv import load_dotenv
-import os
-import json
+import openpyxl
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 
-# def sorted_employee_with_position(input_names):
+
 def sorted_employees(input_names,NAME_PRIORITY_DIC):
 
     sorted_employees = sorted(input_names, key=lambda x: NAME_PRIORITY_DIC[x])
     return sorted_employees 
-
-
 
 
 def find_most_similar(original, candidates):
@@ -45,15 +41,27 @@ def find_most_similar(original, candidates):
     return most_similar
 
 def is_weekend(date):
-    # date_object = datetime.strptime(date_str, '%Y-%m-%d')
-    
     if date.weekday() in [5, 6]:  
         return True
     else:
         return False
     
+def write_data_to_excel(filePath,df):
+    directory, filename = os.path.split(filePath)
 
+    backup_filename = f"{filename}_backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.xlsx"
+    backup_filepath = os.path.join(directory, backup_filename)
 
+    # 원본 파일을 백업 파일로 복사
+    shutil.copyfile(filePath, backup_filepath)
+    
+    workbook = openpyxl.load_workbook(filePath)
+    sheet = workbook.active
+   
+    for row_values in df.values.tolist():
+        sheet.append(row_values)
+    workbook.save(filePath)
+    print(f"데이터가 성공적으로 추가되어 '{filePath}' 파일이 업데이트되었습니다.")
 
 def classify_day_night(start_time, end_time, day_start_time_str="09:00", night_start_time_str="18:30"):
     # 문자열을 datetime 객체로 변환
@@ -68,9 +76,13 @@ def classify_day_night(start_time, end_time, day_start_time_str="09:00", night_s
         end_time = datetime.strptime(end_time, '%H:%M')
 
 
-    if day_start_time <= start_time < night_start_time and end_time <= night_start_time:
+    # if day_start_time <= start_time < night_start_time and end_time <= night_start_time:
+    if  start_time < night_start_time and end_time <= night_start_time:
+
         return '주간'
-    elif day_start_time <= start_time < night_start_time and night_start_time <= end_time:
+    elif  start_time < night_start_time and night_start_time <= end_time:
+   
+    # elif day_start_time <= start_time < night_start_time and night_start_time <= end_time:
         return '주/야간'
     elif night_start_time <= start_time:
         return '야간'
@@ -96,7 +108,6 @@ def convert_to_24hr_format(time_str):
 def extract_date_and_time_range(input_time_str) :
     date_start_str, end_date_str = input_time_str.split("~")
 
-    # 날짜와 시간 정보 추출
     start_date_info = date_start_str.strip().split(" ")
 
     end_date_info = end_date_str.strip().split(" ")
@@ -183,7 +194,6 @@ def extract_workContent(content,notCandidate):
 
     return workContent.lstrip()
 
-# def hiworks_crawler(username, password,start_month,end_month):
 def hiworks_crawler(config_data,start_month,end_month):
 
 
@@ -192,8 +202,8 @@ def hiworks_crawler(config_data,start_month,end_month):
     chrome_options = Options()
     chrome_options.add_argument('--headless')  # 브라우저 창을 숨기는 옵션
 
-    # driver = webdriver.Chrome(options=chrome_options)
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(options=chrome_options)
+    # driver = webdriver.Chrome()
 
 
     pd.set_option('display.max_rows', None)  # 모든 행 표시
@@ -216,31 +226,31 @@ def hiworks_crawler(config_data,start_month,end_month):
     login_url = "https://login.office.hiworks.com/ostech.co.kr"
 
     driver.get(login_url)   
-    
-    id_input = WebDriverWait(driver, 10).until(
+    wait = WebDriverWait(driver, 5)
+          
+    id_input = wait.until(
         EC.presence_of_element_located((By.XPATH, '//input[@placeholder="로그인 ID"]'))
     )
-
     id_input.send_keys(username)
     
  
-    element = WebDriverWait(driver, 10).until(
+    element = wait.until(
     EC.presence_of_element_located((By.CSS_SELECTOR, '#root > div > main > div > div:nth-child(1) > form > fieldset > button'))
     )
-
     element.click()
     
-    password_input = WebDriverWait(driver, 10).until(
+    password_input = wait.until(
     EC.presence_of_element_located((By.NAME, 'password'))
     )
     password_input.send_keys(password)
-    element = WebDriverWait(driver, 10).until(
+
+    element = wait.until(
     EC.presence_of_element_located((By.CSS_SELECTOR, '#root > div > main > div > div:nth-child(1) > form > fieldset > button'))
     )
     element.click()
     
     
-    element = WebDriverWait(driver, 10).until(
+    element = wait.until(
     EC.presence_of_element_located((By.CSS_SELECTOR, '#contents > div.header-wrapper > div > div > div > div:nth-child(4) > a'))
     )
     element.click()
@@ -248,81 +258,79 @@ def hiworks_crawler(config_data,start_month,end_month):
 
     data=[]    
     
-    element = WebDriverWait(driver, 10).until(
+    element = wait.until(
     EC.presence_of_element_located((By.CSS_SELECTOR, '#calendar > div.fc-toolbar > div.fc-center > h2'))
     )
     YearMonth = element.text.replace(".","-")
     
     for month in range(end_month,start_month-1, -1):
-      
-
+     
        # 이전 월 이동
         while str(month) not in YearMonth :
-            element = WebDriverWait(driver, 10).until(
+            element = wait.until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '#calendar > div.fc-toolbar > div.fc-center > button.icon.directleft'))
             )
+            wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#calendar > div.fc-toolbar > div.fc-center > button.icon.directleft')))
             element.click()
 
-            element = WebDriverWait(driver, 10).until(
+            element = wait.until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '#calendar > div.fc-toolbar > div.fc-center > h2'))
             )
             YearMonth = element.text.replace(".","-")
         
 
+        elements = wait.until(
 
-        # element = WebDriverWait(driver, 10).until(
-        # EC.presence_of_element_located((By.CSS_SELECTOR, '#calendar > div.fc-view-container > div > table > tbody > tr > td > div > div > div:nth-child(1) > div.fc-content-skeleton > table > thead > tr > td.fc-day-number.fc-fri.fc-past'))
-        # )
-    
-    
-        elements = WebDriverWait(driver, 10).until(
-        # EC.presence_of_all_elements_located((By.CLASS_NAME, 'fc-event-container')))
         EC.presence_of_all_elements_located((By.CLASS_NAME, 'fc-day-grid-event.fc-h-event.fc-event.fc-start.fc-end.share.fc-draggable.c1')))
-
-        for element in tqdm(elements, desc="Processing elements", unit="element"):
-            element.click() 
-            time.sleep(1)
-        
-
+       
             
-            wait = WebDriverWait(driver, 10)
-            calName_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, 'span.fl#__cal_name')))        
+        for element in tqdm(elements, desc=f"{YearMonth} 데이터 작업 진행", unit="element"):
+
+            wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'fc-day-grid-event.fc-h-event.fc-event.fc-start.fc-end.share.fc-draggable.c1')))
+            element.click() 
+            
+            
+            locator = (By.CSS_SELECTOR, 'span.fl#__cal_name')
+
+            calName_element = wait.until(
+            lambda driver: driver.find_element(*locator) if driver.find_element(*locator).text.strip() != '' else None
+            )
+            
             cal_name=''
             subject=''
             contents=''
-            scheduleTime_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#__schedule_time')))   
-            print(scheduleTime_element.text)
+            scheduleTime_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#__schedule_time')))  
+         
             if calName_element.text.strip():
                 cal_name = calName_element.text 
-                print(cal_name)
                 if cal_name=="근태" :
                     try :        
-                        element = driver.find_element(By.CSS_SELECTOR, '#layer_schedule_confirm > a.icon.btn_closelayer')
+                        element=wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#layer_schedule_confirm > a.icon.btn_closelayer')))
                         element.click() 
                     except:
-                        element = driver.find_element(By.CSS_SELECTOR, '#layer_schedule > div.layer_button > button:nth-child(2)')
+                        element=wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#layer_schedule > div.layer_button > button:nth-child(2)')))
                         element.click() 
                     continue
         
                     
                 subject_element = wait.until(EC.presence_of_element_located((By.XPATH, '//div[@id="__subject"]')))
-                print( subject_element.text)
                 if subject_element.text.strip():
                     subject = subject_element.text 
                     if( "검진" in subject or "연차"  in subject  or "휴가" in subject ):
                         try :        
-                            element = driver.find_element(By.CSS_SELECTOR, '#layer_schedule_confirm > a.icon.btn_closelayer')
+                            element=wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#layer_schedule_confirm > a.icon.btn_closelayer')))
                             element.click() 
                         except:
-
-                            element = driver.find_element(By.CSS_SELECTOR, '#layer_schedule > div.layer_button > button:nth-child(2)')
+                            element=wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#layer_schedule > div.layer_button > button:nth-child(2)')))
                             element.click() 
                         continue
+               
                 
                     customer =extract_customer(subject,CUSTOMER_CANDIDATE)
                     region = extract_region(subject,REGION_CANDIDATE_ARR,REGION_CANDIDATE_WEIGHTS_DIC)
 
                 scheduleTime_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#__schedule_time')))   
+ 
                 if scheduleTime_element.text.strip():
                     start_date,end_date, start_time, end_time = extract_date_and_time_range(scheduleTime_element.text )
         
@@ -344,12 +352,7 @@ def hiworks_crawler(config_data,start_month,end_month):
                 
 
                     while current_date <= end_date:
-                        print("여기")
-                        # print(scheduleTime_element.text.strip())
-                        # print(current_date.strftime("%Y-%m-%d"))
-                        # print( YearMonth in current_date.strftime("%Y-%m-%d") )
                         if( YearMonth in current_date.strftime("%Y-%m-%d") ):
-                            print("저장")
                             data.append({
                                 'schedule_date' :  current_date.strftime("%Y-%m-%d"),
                                 '시작일':  current_date.strftime("%Y-%m-%d"),
@@ -376,17 +379,16 @@ def hiworks_crawler(config_data,start_month,end_month):
 
 
             try :        
-                element = driver.find_element(By.CSS_SELECTOR, '#layer_schedule_confirm > a.icon.btn_closelayer')
-                element.click() 
+                    element=wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#layer_schedule_confirm > a.icon.btn_closelayer')))
+                    element.click() 
             except:
-                element = driver.find_element(By.CSS_SELECTOR, '#layer_schedule > div.layer_button > button:nth-child(2)')
-                element.click() 
+                    element=wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#layer_schedule > div.layer_button > button:nth-child(2)')))
+                    element.click() 
         
 
     df = pd.DataFrame(data)
    
   
-
     for i, (worker,name_with_position) in enumerate(EMPLOYEES_DIC.items()):
         df[f'SE{i + 1}'] = df['employees'].apply(lambda x: name_with_position if worker in x and worker != '' else None)
 
@@ -395,18 +397,10 @@ def hiworks_crawler(config_data,start_month,end_month):
     df_sorted.drop(['employees','schedule_date'],axis=1,inplace=True)
 
     selected_columns_order = ['시작일', '종료일', '서비스종류','고객사명','지역/장소','영업','SE1','SE2','SE3','SE4','SE5','Vendor','Model','작업내역','old_part','new_part','유형1','유형2','구분1','구분2','주/야/주말구분','비고(장애발생내역, 상세지원내역 등)']
-    df_sorted[selected_columns_order].to_excel('output.xlsx', index=False)
+    df_sorted_columns_order =df_sorted[selected_columns_order]
+    df_sorted_columns_order.to_excel('output.xlsx', index=False)
+    
 
-    # 첫 번째 엑셀 파일 읽기
-    excel_file1 = '2023년 서비스 내역_20231205.xlsx'
-    df1 = pd.read_excel(excel_file1)
+    excel_file = config_data['config']['FILE_PATH']
 
-    # 두 번째 엑셀 파일 읽기
-    excel_file2 = 'output.xlsx'
-    df2 = pd.read_excel(excel_file2)
-
-    # 두 데이터프레임을 합치기
-    merged_df = pd.concat([df1, df2], ignore_index=True)
-
-    # 합쳐진 데이터프레임을 새로운 엑셀 파일로 저장
-    merged_df.to_excel('merged_file.xlsx', index=False)
+    write_data_to_excel(excel_file,df_sorted_columns_order)
