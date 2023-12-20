@@ -43,14 +43,17 @@ def read_ini_file(file_path):
     REGION_CANDIDATE_str = config.get('config', 'REGION_CANDIDATE')
     REGION_CANDIDATE_WEIGHTS_str =config.get('config', 'REGION_CANDIDATE_WEIGHTS')
     FILE_PATH = config.get('config', 'FILE_PATH')
-
-
+    EXCLUDE_SUBJECT = config.get('config','EXCLUDE_SUBJECT')
+    CUSTOMER_DIC=config.get('config','CUSTOMER_DIC')
+    
     EMPLOYEES_DIC = get_env_dic(EMPLOYEES_str)
     REGION_CANDIDATE_ARR = get_env_arr(REGION_CANDIDATE_str)
     REGION_CANDIDATE_WEIGHTS_DIC = get_env_dic(REGION_CANDIDATE_WEIGHTS_str)
     CUSTOMER_CANDIDATE = get_env_arr(CUSTOMER_CANDIDATE_str)
     NAME_PRIORITY_DIC = get_env_dic(NAME_PRIORITY_str)
-    NOT_WORK_CONTENT = get_env_arr(NOT_WORK_CONTENT_str)
+    EXCLUDE_WORK_CONTENT = get_env_arr(NOT_WORK_CONTENT_str)
+    EXCLUDE_SUBJECT = get_env_arr(EXCLUDE_SUBJECT)
+    CUSTOMER_DIC=get_env_dic(CUSTOMER_DIC)
 
     return {
         'config': {
@@ -62,8 +65,9 @@ def read_ini_file(file_path):
             'REGION_CANDIDATE_ARR': REGION_CANDIDATE_ARR,
             'REGION_CANDIDATE_WEIGHTS_DIC':REGION_CANDIDATE_WEIGHTS_DIC,
             'CUSTOMER_CANDIDATE':CUSTOMER_CANDIDATE,
-            'NOT_WORK_CONTENT':NOT_WORK_CONTENT,
-            
+            'EXCLUDE_WORK_CONTENT':EXCLUDE_WORK_CONTENT,
+            'EXCLUDE_SUBJECT':EXCLUDE_SUBJECT,
+            'CUSTOMER_DIC' : CUSTOMER_DIC
          }
     }
 

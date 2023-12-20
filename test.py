@@ -252,8 +252,8 @@ def classify_day_night(start_time, end_time, day_start_time_str="09:00", night_s
 
 
 
-date="2023-11-27 오전 9:00~오후 6:00"
-start_date,end_date, start_time, end_time = extract_date_and_time_range(date)
+# date="2023-11-27 오전 9:00~오후 6:00"
+# start_date,end_date, start_time, end_time = extract_date_and_time_range(date)
 
 
 
@@ -282,4 +282,67 @@ def write_data_to_excel(filePath):
     # print(f"데이터가 성공적으로 추가되어 '{filePath}' 파일이 업데이트되었습니다.")
     
 
-write_data_to_excel("2023년 서비스 내역_20231205.xlsx")
+# write_data_to_excel("2023년 서비스 내역_20231205.xlsx")
+
+
+CUSTOMER_CANDIDATE=['','kt cloud','ktds','kt m&s','ktskylife','대검찰청','링네트','매그나칩반도체','메니인소프트','서울사이버안전센터','아리랑TV','아이넵소프트','엘비유세스(구 엘비휴넷)','예탁결제원','우리금융캐피탈','중소벤쳐기업진흥공단','지니뮤직','플레이디','합동참모본부','해치텍']
+REGION_CANDIDATE=['','강남구청','cloud','ktskylife','LGU+','가산','강남','과천','과천청사','광주고등검찰청','김천','대구','대구지방검찰청','목동','목동,백석','방배동','백석동','분당','분당kt idc','상암고비즈','상암동','서울사무소','서초','서초본청','신사','아리랑TV','안양','야탑동','여의도','오창','용산','지니뮤직','창원지방검찰청','청주','케이뱅크(목동ktidc)','하나은행청라데이터센터']
+REGION_CANDIDATE_WEIGHTS = {"":1,"강남구청":2,"cloud": 1, "ktskylife": 1, "LGU+": 1, "가산": 1, "강남": 1, "과천": 1, "과천청사": 1, "광주고등검찰청": 1, "김천": 1, "대구": 1, "대구지방검찰청": 1, "서초본청":3,"목동": 5, "목동,백석": 4, "방배동": 1, "백석동": 4, "분당": 5, "분당kt idc": 2, "상암고비즈": 1, "상암동": 3, "서울사무소": 1, "서초": 1, "신사": 3, "아리랑TV": 1, "안양": 1, "야탑동": 1, "여의도": 1, "오창": 1, "용산": 1, "지니뮤직": 1, "창원지방검찰청": 1, "청주": 2, "케이뱅크(목동ktidc)": 1, "하나은행청라데이터센터": 1}
+
+CUSTOMER_DIC={"예탁결제원":"여의도","서울사이버안전센터":"상암","중소벤처기업진흥공단":"상암고비즈","플레이디":"가산","엘비유세스(구 엘비휴넷)":"안양","kt m&s":"과천","아이넵소프트":"하나은행청라데이터센터","메니인소프트":"케이뱅크(목동ktidc)","키파운드리(서울)":"서울사무소","링네트":"아리랑TV"}
+
+def get_similarity(original,candidate) : 
+    matcher = difflib.SequenceMatcher(None, original, candidate)
+    similarity_score = matcher.ratio()
+    return similarity_score
+
+def get_resion_by_custormer(subject,candidate, customerDic):
+    customer = find_most_similar(subject,candidate)
+    print(customer)
+    if get_similarity(subject,customer) > 0.7 :
+        return customerDic.get(customer)
+    else :
+        return None
+def extract_customer(input_str,candidate):
+    result = find_most_similar(input_str,candidate)
+    return result
+   
+def find_most_similar(original, candidates, weights=None):
+    if weights is None:
+        # 가중치가 제공되지 않으면 모든 후보에 대해 동일한 가중치를 사용합니다.
+        weights = {candidate: 1 for candidate in candidates}
+
+    similarity_scores = []
+    for candidate in candidates:
+        # SequenceMatcher를 사용하여 유사도 측정
+        matcher = difflib.SequenceMatcher(None, original, candidate)
+        similarity_score = matcher.ratio()
+        print(candidate, similarity_score)
+        if similarity_score==1.0 :
+            return candidate
+        # 가중치 적용
+        weighted_similarity = similarity_score * weights[candidate]
+        # 유사도 점수 저장
+        similarity_scores.append((candidate, weighted_similarity))
+
+    # 가장 유사도가 높은 순서대로 정렬
+    similarity_scores.sort(key=lambda x: x[1], reverse=True)
+    # print(similarity_scores)
+    # 가장 유사도가 높은 값들 반환 (동일한 최고 유사도를 갖는 모든 후보 반환)
+    most_similar_candidates = [candidate for candidate, _ in similarity_scores if _ == similarity_scores[0][1]]
+    most_similar_candidates_str = ', '.join(most_similar_candidates)
+    return most_similar_candidates_str
+
+
+def extract_region(input_str,candidate,weights):
+    result = find_most_similar(input_str,candidate,weights)
+    return result
+
+result = get_resion_by_custormer("LGU 상암",CUSTOMER_CANDIDATE,CUSTOMER_DIC)
+print(result)
+if result :
+    region = result
+else :
+    region = extract_region("LGU 상암",REGION_CANDIDATE_WEIGHTS,REGION_CANDIDATE_WEIGHTS)
+
+print(region)
