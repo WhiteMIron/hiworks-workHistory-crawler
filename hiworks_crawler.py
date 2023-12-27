@@ -168,9 +168,11 @@ def find_most_similar(original, candidates, weights=None):
     similarity_scores.sort(key=lambda x: x[1], reverse=True)
 
     # 가장 유사도가 높은 값들 반환 (동일한 최고 유사도를 갖는 모든 후보 반환)
-    most_similar_candidates = [candidate for candidate, _ in similarity_scores if _ == similarity_scores[0][1]]
-    most_similar_candidates_str = ', '.join(most_similar_candidates)
-    return most_similar_candidates_str
+    # most_similar_candidates = [candidate for candidate, _ in similarity_scores if _ == similarity_scores[0][1]]
+    # # most_similar_candidates_str = ', '.join(most_similar_candidates)
+    # # return most_similar_candidates_str
+    most_similar = similarity_scores[0][0]
+    return most_similar
 
 def get_similarity(original,candidate) : 
     matcher = difflib.SequenceMatcher(None, original, candidate)
@@ -216,7 +218,7 @@ def hiworks_crawler(config_data,start_month,end_month):
 
     chrome_options = Options()
     chrome_options.add_argument('--headless')  # 브라우저 창을 숨기는 옵션
-
+    chrome_options.add_argument("--log-level=3")
     driver = webdriver.Chrome(options=chrome_options)
     # driver = webdriver.Chrome()
 
@@ -305,7 +307,7 @@ def hiworks_crawler(config_data,start_month,end_month):
             wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'fc-day-grid-event.fc-h-event.fc-event.fc-start.fc-end.share.fc-draggable.c1')))
             wait.until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'body')))
         except:
-            print("에러")
+            pass
 
         for element in tqdm(elements, desc=f"{currentYearMonth} 데이터 작업 진행", unit="element"):
             wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'fc-day-grid-event.fc-h-event.fc-event.fc-start.fc-end.share.fc-draggable.c1')))
@@ -344,15 +346,15 @@ def hiworks_crawler(config_data,start_month,end_month):
                                 element.click() 
                             continue
                
-                
+                            
                     customer = extract_customer(subject,CUSTOMER_CANDIDATE)
-                    result = get_resion_by_custormer(subject,CUSTOMER_CANDIDATE,CUSTOMER_DIC)
-                    if result :
-                        region = result
-                    else :
-                        region = extract_region(subject,REGION_CANDIDATE_ARR,REGION_CANDIDATE_WEIGHTS_DIC)
-
-            
+                    # result = get_resion_by_custormer(subject,CUSTOMER_CANDIDATE,CUSTOMER_DIC)
+                    # if result :
+                    #     region = result
+                    # else :
+                    #     region = extract_region(subject,REGION_CANDIDATE_ARR,REGION_CANDIDATE_WEIGHTS_DIC)
+                
+                        
                 if scheduleTime_element.text.strip():
                     start_date,end_date, start_time, end_time = extract_date_and_time_range(scheduleTime_element.text )
         
@@ -365,22 +367,21 @@ def hiworks_crawler(config_data,start_month,end_month):
                     workContent = extract_workContent(contents,EXCLUDE_WORK_CONTENT)
             
                     current_date = start_date
-
-                    if is_weekend(start_date) :
-                        shift="주말"
-                    else :
-                        shift= classify_day_night(start_time,end_time)
-
-                    
+               
                     while current_date <= end_date:
                         if( currentYearMonth in current_date.strftime("%Y-%m-%d") ):
+                            if is_weekend(current_date) :
+                                shift="주말"
+                            else :
+                                shift= classify_day_night(start_time,end_time)
+                            
                             data.append({
                                 'schedule_date' :  current_date.strftime("%Y-%m-%d"),
                                 '시작일':  current_date.strftime("%Y-%m-%d"),
                                 '종료일':  current_date.strftime("%Y-%m-%d"),
                                 '서비스종류':'',
                                 '고객사명':customer,
-                                '지역/장소' : region,
+                                '지역/장소' : '',
                                 '영업':"",
                                 'Vendor':"",
                                 "Model":"",
@@ -419,7 +420,6 @@ def hiworks_crawler(config_data,start_month,end_month):
 
     selected_columns_order = ['시작일', '종료일', '서비스종류','고객사명','지역/장소','영업','SE1','SE2','SE3','SE4','SE5','Vendor','Model','작업내역','old_part','new_part','유형1','유형2','구분1','구분2','주/야/주말구분','비고(장애발생내역, 상세지원내역 등)']
     df_sorted_columns_order =df_sorted[selected_columns_order]
-    df_sorted_columns_order.to_excel('output.xlsx', index=False)
     
 
     excel_file = config_data['config']['FILE_PATH']

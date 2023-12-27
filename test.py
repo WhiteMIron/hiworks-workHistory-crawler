@@ -9,7 +9,7 @@ import pandas as pd
 import os
 import ast
 import json
-
+from datetime import datetime,timedelta
 
 
 load_dotenv()
@@ -73,8 +73,9 @@ def find_most_similar(original, candidates, weights=None):
     similarity_scores.sort(key=lambda x: x[1], reverse=True)
 
     # 가장 유사도가 높은 값들 반환 (동일한 최고 유사도를 갖는 모든 후보 반환)
-    most_similar_candidates = [candidate for candidate, _ in similarity_scores if _ == similarity_scores[0][1]]
-    return most_similar_candidates
+    # most_similar_candidates = [candidate for candidate, _ in similarity_scores if _ == similarity_scores[0][1]]
+    most_similar = similarity_scores[0][0]
+    return most_similar
 
 
 
@@ -338,11 +339,30 @@ def extract_region(input_str,candidate,weights):
     result = find_most_similar(input_str,candidate,weights)
     return result
 
-result = get_resion_by_custormer("LGU 상암",CUSTOMER_CANDIDATE,CUSTOMER_DIC)
-print(result)
-if result :
-    region = result
-else :
-    region = extract_region("LGU 상암",REGION_CANDIDATE_WEIGHTS,REGION_CANDIDATE_WEIGHTS)
+# result = get_resion_by_custormer("키파운드리(청주)",CUSTOMER_CANDIDATE,CUSTOMER_DIC)
+# print(result)
+# if result :
+#     region = result
+# else :
+#     region = extract_region("키파운드리(청주)",REGION_CANDIDATE_WEIGHTS,REGION_CANDIDATE_WEIGHTS)
 
-print(region)
+# print(region)
+
+# customer =extract_customer("키파운드리(청주)")
+
+
+
+def is_weekend(date):
+    if date.weekday() in [5, 6]:  
+        return True
+    else:
+        return False
+date_string = "2023-12-30"
+formatted_date = datetime.strptime(date_string, "%Y-%m-%d")
+
+print(formatted_date)
+print(is_weekend(formatted_date))
+
+
+customer = extract_customer("고비즈코리아",CUSTOMER_CANDIDATE)
+print(customer)                
