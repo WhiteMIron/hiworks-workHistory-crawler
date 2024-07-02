@@ -166,6 +166,9 @@ def find_most_similar(original, candidates, weights=None):
 
     # 가장 유사도가 높은 순서대로 정렬
     similarity_scores.sort(key=lambda x: x[1], reverse=True)
+    
+    if similarity_scores[0][1] < 0.5 :
+        return original
 
     # 가장 유사도가 높은 값들 반환 (동일한 최고 유사도를 갖는 모든 후보 반환)
     # most_similar_candidates = [candidate for candidate, _ in similarity_scores if _ == similarity_scores[0][1]]
@@ -214,13 +217,13 @@ def is_subject_containing_excluded_words(subject, exclude_words):
 def hiworks_crawler(config_data,start_month,end_month):
 
 
-    load_dotenv()
+    # load_dotenv()
 
     chrome_options = Options()
     chrome_options.add_argument('--headless')  # 브라우저 창을 숨기는 옵션
     chrome_options.add_argument("--log-level=3")
-    driver = webdriver.Chrome(options=chrome_options)
-    # driver = webdriver.Chrome()
+    # driver = webdriver.Chrome(options=chrome_options)
+    driver = webdriver.Chrome()
 
 
     pd.set_option('display.max_rows', None)  # 모든 행 표시
@@ -354,7 +357,7 @@ def hiworks_crawler(config_data,start_month,end_month):
                     # else :
                     #     region = extract_region(subject,REGION_CANDIDATE_ARR,REGION_CANDIDATE_WEIGHTS_DIC)
                 
-                        
+                print(f'scheduleTime_element.text:{scheduleTime_element.text}')
                 if scheduleTime_element.text.strip():
                     start_date,end_date, start_time, end_time = extract_date_and_time_range(scheduleTime_element.text )
         
