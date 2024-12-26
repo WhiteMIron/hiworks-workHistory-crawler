@@ -107,7 +107,6 @@ if __name__ == "__main__":
 
             current_year = get_current_year()
             end_Year_Month = get_year_month(current_year, end_month)
-
             break
 
         except ValueError as e:

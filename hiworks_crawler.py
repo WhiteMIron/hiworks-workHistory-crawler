@@ -46,26 +46,38 @@ def is_weekend(date):
         return False
     
 def write_data_to_excel(filePath,df):
-    
-    if os.path.exists(filePath):
-        directory, filename = os.path.split(filePath)
 
-        backup_filename = f"{filename}_backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.xlsx"
-        backup_filepath = os.path.join(directory, backup_filename)
+    print("filePath1:",filePath)
+    today = datetime.now()
+    formatted_date = today.strftime('%Y%m%d')
+    filePath += formatted_date+".xlsx"
+       
+    # if os.path.exists(filePath):
+        # directory, filename = os.path.split(filePath)
+
+        # backup_filename = f"{filename}_backup_{datetime.now().strftime('%Y%m%d%H%M%S')}.xlsx"
+        # backup_filepath = os.path.join(directory, backup_filename)
 
         # 원본 파일을 백업 파일로 복사
-        shutil.copyfile(filePath, backup_filepath)
+        # shutil.copyfile(filePath, backup_filepath)
         
-        workbook = openpyxl.load_workbook(filePath)
-        sheet = workbook.active
-    
-        for row_values in df.values.tolist():
-            sheet.append(row_values)
-        workbook.save(filePath)
-        print(f"데이터가 성공적으로 추가되어 '{filePath}' 파일이 업데이트되었습니다.")
-    else :
-        df.to_excel(filePath, index=False)
-        print(f"데이터가 성공적으로 추가되어 '{filePath}' 파일이 생성되었습니다.")
+        # workbook = openpyxl.load_workbook(filePath)
+        # sheet = workbook.active
+        
+                
+        # today = datetime.now()
+        # formatted_date = today.strftime('%Y%m%d')
+        # filePath += formatted_date+".xlsx"
+       
+        # for row_values in df.values.tolist():
+        #     sheet.append(row_values)
+        # workbook.save(filePath)
+        # print(f"데이터가 성공적으로 추가되어 '{filePath}' 파일이 업데이트되었습니다.")
+    # else :
+        # df.to_excel(filePath, index=False)
+        # print(f"데이터가 성공적으로 추가되어 '{filePath}' 파일이 생성되었습니다.")
+    df.to_excel(filePath, index=False)
+    print(f"데이터가 성공적으로 추가되어 '{filePath}' 파일이 생성되었습니다.")
 
 def classify_day_night(start_time, end_time, day_start_time_str="09:00", night_start_time_str="18:30"):
     # 문자열을 datetime 객체로 변환
@@ -281,12 +293,29 @@ def hiworks_crawler(config_data,start_month,end_month):
 
     currentYearMonth = element.text.replace(".","-")
     currentMonth = currentYearMonth.split("-")[1]
-    for month in range(end_month,start_month-1, -1):
 
+    # 지난 년도 조회시 
+    # if str(end_month) == "12":
+    #     target = "2024-01"
+
+    # else :
+    #     target = "2023-0"+str(end_month+1)
+
+    # while currentYearMonth !=target :
+    #     print("currentYearMonth:",currentYearMonth,"target",target,"currentYearMonth !=target",currentYearMonth !=target)
+
+    #     element=wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#calendar > div.fc-toolbar > div.fc-center > button.icon.directleft')))
+    #     element.click()
+
+    #     element = wait.until(
+    #     EC.presence_of_element_located((By.CSS_SELECTOR, '#calendar > div.fc-toolbar > div.fc-center > h2'))
+    #     )
+    #     currentYearMonth = element.text.replace(".","-")
+
+    for month in range(end_month,start_month-1, -1):
         if currentMonth.startswith('0'):
             currentMonth = currentMonth[1:]
      
- 
        # 이전 월 이동
         while currentMonth not in str(month) :
 
@@ -301,7 +330,21 @@ def hiworks_crawler(config_data,start_month,end_month):
 
             if currentMonth.startswith('0'):
                currentMonth = currentMonth[1:]
-  
+
+        # 다음 월 이동
+        # while currentMonth not in str(month) :
+
+        #     element=wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#calendar > div.fc-toolbar > div.fc-center > button.icon.directright')))
+        #     element.click()
+
+        #     element = wait.until(
+        #     EC.presence_of_element_located((By.CSS_SELECTOR, '#calendar > div.fc-toolbar > div.fc-center > h2'))
+        #     )
+        #     currentYearMonth = element.text.replace(".","-")
+        #     currentMonth = currentYearMonth.split("-")[1]
+
+        #     if currentMonth.startswith('0'):
+        #        currentMonth = currentMonth[1:]
 
         elements = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, 'fc-day-grid-event.fc-h-event.fc-event.fc-start.fc-end.share.fc-draggable.c1')))
        
@@ -357,7 +400,6 @@ def hiworks_crawler(config_data,start_month,end_month):
                     # else :
                     #     region = extract_region(subject,REGION_CANDIDATE_ARR,REGION_CANDIDATE_WEIGHTS_DIC)
                 
-                print(f'scheduleTime_element.text:{scheduleTime_element.text}')
                 if scheduleTime_element.text.strip():
                     start_date,end_date, start_time, end_time = extract_date_and_time_range(scheduleTime_element.text )
         
@@ -378,6 +420,7 @@ def hiworks_crawler(config_data,start_month,end_month):
                             else :
                                 shift= classify_day_night(start_time,end_time)
                             
+                            # if customer in str("LGU+"):
                             data.append({
                                 'schedule_date' :  current_date.strftime("%Y-%m-%d"),
                                 '시작일':  current_date.strftime("%Y-%m-%d"),
